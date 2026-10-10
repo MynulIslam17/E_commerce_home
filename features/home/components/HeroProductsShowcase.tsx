@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useActiveProduct } from '@/features/products/context/ProductContext';
 import { ProductFloatingElements } from '@/features/products/components/ProductFloatingElements';
@@ -119,7 +119,7 @@ export function HeroProductsShowcase() {
       '--bg-outer': targetTheme.bgOuter,
       '--accent-color': targetTheme.accent,
       '--accent-glow': targetTheme.accentGlow,
-      duration: 1.2,
+      duration: 1.0,
       ease: 'power2.inOut',
     });
 
@@ -128,7 +128,6 @@ export function HeroProductsShowcase() {
       onComplete: () => {
         isSpinningRef.current = false;
         setIsSwitching(false);
-        // Refresh ScrollTrigger to recalculate exact destination card coordinates
         ScrollTrigger.refresh();
       },
     });
@@ -138,12 +137,12 @@ export function HeroProductsShowcase() {
     spinTimeline
       .to(spinState, {
         rotationY: 180,
-        blur: 12,
+        blur: 10,
         scale: 0.88,
-        duration: 0.45,
+        duration: 0.4,
         ease: 'power2.in',
         onUpdate: () => {
-          bottle.style.filter = `blur(${spinState.blur}px) drop-shadow(0 25px 45px rgba(0,0,0,0.6))`;
+          bottle.style.filter = `blur(${spinState.blur}px) drop-shadow(0 20px 40px rgba(0,0,0,0.6))`;
           bottle.style.transform = `perspective(1200px) rotateY(${spinState.rotationY}deg) scale(${spinState.scale})`;
         },
         onComplete: () => {
@@ -154,10 +153,10 @@ export function HeroProductsShowcase() {
         rotationY: 360,
         blur: 0,
         scale: 1,
-        duration: 0.85,
+        duration: 0.75,
         ease: 'back.out(0.8)',
         onUpdate: () => {
-          bottle.style.filter = `blur(${spinState.blur}px) drop-shadow(0 30px 60px rgba(0,0,0,0.7))`;
+          bottle.style.filter = `blur(${spinState.blur}px) drop-shadow(0 25px 50px rgba(0,0,0,0.7))`;
           bottle.style.transform = `perspective(1200px) rotateY(${spinState.rotationY}deg) scale(${spinState.scale})`;
         },
         onComplete: () => {
@@ -190,11 +189,12 @@ export function HeroProductsShowcase() {
 
       if (!showcaseEl || !heroStageEl || !productsStageEl || !travelingBottleEl || !bottleVisual) return;
 
+      const isMobile = window.innerWidth < 1024;
+
       // Dynamic calculation of traveling bottle target coordinates and scale
       const getTravelCoordinates = () => {
         const targetSlot = cardSlotRefs.current[activeId];
         if (!targetSlot || !showcaseEl || !bottleVisual) {
-          // Fallback defaults for desktop
           return {
             deltaX: activeId === 'sunsilk' ? -380 : 380,
             deltaY: 40,
@@ -220,7 +220,7 @@ export function HeroProductsShowcase() {
         // Accurate scale calculation: slot height divided by hero bottle native rendered height
         const heroHeight = bottleVisual.offsetHeight || 530;
         const slotHeight = slotRect.height || 256;
-        const targetScale = Math.min(slotHeight / heroHeight, slotRect.width / (bottleVisual.offsetWidth || 320)) * 0.95;
+        const targetScale = Math.min(slotHeight / heroHeight, slotRect.width / (bottleVisual.offsetWidth || 320)) * 0.96;
 
         return {
           deltaX,
@@ -235,11 +235,12 @@ export function HeroProductsShowcase() {
           id: 'showcase-st',
           trigger: showcaseEl,
           start: 'top top',
-          end: '+=150%',
+          end: isMobile ? '+=125%' : '+=150%',
           pin: true,
           pinSpacing: true,
-          scrub: 0.8,
+          scrub: isMobile ? 0.5 : 0.8,
           anticipatePin: 1,
+          fastScrollEnd: true,
           onUpdate: (self) => {
             scrollProgressRef.current = self.progress;
           },
@@ -250,24 +251,23 @@ export function HeroProductsShowcase() {
 
       // ---------------------------------------------------------------------
       // PHASE 1 & 2: Hero Scroll Begins (0.00 -> 0.35)
-      // Bottle tilts 26-30 degrees, scales up slightly toward viewer (1.08x)
-      // Hero text slides outward and fades away
       // ---------------------------------------------------------------------
       masterTl
         .to(
           travelingBottleEl,
           {
-            rotation: 28,
+            rotation: 26,
             scale: 1.08,
             ease: 'power1.out',
             duration: 0.35,
+            force3D: true,
           },
           0
         )
         .to(
           spotlightEl,
           {
-            scale: 1.3,
+            scale: 1.25,
             opacity: 0.8,
             duration: 0.35,
           },
@@ -318,7 +318,7 @@ export function HeroProductsShowcase() {
         productsStageEl,
         {
           opacity: 0,
-          y: 70,
+          y: 60,
           pointerEvents: 'none',
         },
         {
@@ -338,9 +338,10 @@ export function HeroProductsShowcase() {
           x: () => getTravelCoordinates().deltaX,
           y: () => getTravelCoordinates().deltaY,
           scale: () => getTravelCoordinates().scale,
-          rotation: -1.5, // Gentle slight natural card tilt
+          rotation: -1.5,
           ease: 'power2.inOut',
           duration: 0.55,
+          force3D: true,
         },
         0.3
       );
@@ -373,7 +374,7 @@ export function HeroProductsShowcase() {
       if (specsBox) {
         masterTl.fromTo(
           specsBox,
-          { opacity: 0.3, y: 12 },
+          { opacity: 0.3, y: 10 },
           { opacity: 1, y: 0, duration: 0.15, ease: 'power2.out' },
           0.85
         );
@@ -382,14 +383,21 @@ export function HeroProductsShowcase() {
       if (ctaBtn) {
         masterTl.fromTo(
           ctaBtn,
-          { opacity: 0.3, y: 10 },
+          { opacity: 0.3, y: 8 },
           { opacity: 1, y: 0, duration: 0.15, ease: 'power2.out' },
           0.88
         );
       }
     }, showcaseRef);
 
+    // Resize handler for responsive orientation changes
+    const handleResize = () => {
+      ScrollTrigger.refresh();
+    };
+    window.addEventListener('resize', handleResize);
+
     return () => {
+      window.removeEventListener('resize', handleResize);
       ctx.revert();
     };
   }, [activeId, activeProduct]);
@@ -403,9 +411,9 @@ export function HeroProductsShowcase() {
         background: `radial-gradient(circle at 50% 45%, var(--bg-inner) 0%, var(--bg-mid) 50%, var(--bg-outer) 100%)`,
       }}
     >
-      {/* Pinned Stage Viewport (100vh) */}
-      <div className="relative w-full h-[100dvh] min-h-[700px] max-h-[1050px] overflow-hidden flex items-center justify-center">
-        {/* Floating Ambient Particles Layer (Persists throughout Hero) */}
+      {/* Pinned Stage Viewport (100dvh) */}
+      <div className="relative w-full h-[100dvh] min-h-[580px] max-h-[1050px] overflow-hidden flex items-center justify-center">
+        {/* Floating Ambient Particles Layer */}
         <ProductFloatingElements />
 
         {/* ------------------------------------------------------------------------- */}
@@ -414,8 +422,8 @@ export function HeroProductsShowcase() {
         <section
           id="home"
           ref={heroStageRef}
-          className="absolute inset-0 w-full h-full flex flex-col justify-between px-6 sm:px-10 lg:px-16 z-10 transition-opacity duration-300"
-          style={{ paddingTop: '128px', paddingBottom: '32px' }}
+          className="absolute inset-0 w-full h-full flex flex-col justify-between px-4 sm:px-8 lg:px-16 z-10 transition-opacity duration-300"
+          style={{ paddingTop: '86px', paddingBottom: '20px' }}
         >
           {/* Desktop Composition (>= 1024px) */}
           <div
@@ -423,8 +431,8 @@ export function HeroProductsShowcase() {
             style={{
               maxWidth: '1440px',
               margin: '0 auto',
-              height: 'calc(100vh - 180px)',
-              minHeight: '560px',
+              height: 'calc(100vh - 160px)',
+              minHeight: '540px',
               maxHeight: '800px',
             }}
           >
@@ -518,18 +526,18 @@ export function HeroProductsShowcase() {
           </div>
 
           {/* Mobile Hero Flow (< 1024px) */}
-          <div className="flex lg:hidden flex-col items-center justify-between text-center w-full max-w-lg mx-auto relative z-20 h-full py-2 pointer-events-none">
-            <div className="space-y-1.5 px-4 w-full pointer-events-auto pt-1">
+          <div className="flex lg:hidden flex-col items-center justify-between text-center w-full max-w-lg mx-auto relative z-20 h-full py-1 pointer-events-none">
+            <div className="space-y-1 px-4 w-full pointer-events-auto pt-1">
               <h1 className="hero-cursive-title transition-all duration-700">
                 <span className="outline-title mr-2">{activeProduct.heroHeadline.leftLine1}</span>
                 <span className="text-white drop-shadow-xl">{activeProduct.heroHeadline.leftLine2}</span>
               </h1>
-              <p className="text-white/80 text-xs leading-relaxed max-w-[300px] mx-auto font-normal">
+              <p className="text-white/80 text-[11px] sm:text-xs leading-relaxed max-w-[290px] mx-auto font-normal">
                 {activeProduct.description}
               </p>
             </div>
 
-            <div className="w-full flex justify-center pb-2 z-30 mt-auto pointer-events-auto">
+            <div className="w-full flex justify-center pb-1 z-30 mt-auto pointer-events-auto">
               <ProductCarouselCards />
             </div>
           </div>
@@ -549,38 +557,37 @@ export function HeroProductsShowcase() {
 
         {/* ------------------------------------------------------------------------- */}
         {/* PRODUCTS STAGE LAYER (#products) */}
-        {/* Initially hidden with opacity-0, fades in during scroll phase 3 */}
         {/* ------------------------------------------------------------------------- */}
         <section
           id="products"
           ref={productsStageRef}
-          className="absolute inset-0 w-full h-full flex flex-col justify-center items-center px-5 sm:px-8 md:px-12 lg:px-16 z-20 will-change-transform"
+          className="absolute inset-0 w-full h-full flex flex-col justify-center items-center px-4 sm:px-8 md:px-12 lg:px-16 z-20 will-change-transform"
           style={{
             opacity: 0,
             pointerEvents: 'none',
-            transform: 'translateY(70px)',
+            transform: 'translateY(60px)',
           }}
         >
-          <div className="max-w-7xl mx-auto w-full pt-16 sm:pt-14">
+          <div className="max-w-7xl mx-auto w-full pt-12 sm:pt-14 lg:pt-16">
             {/* Section Header */}
-            <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-10 space-y-2 sm:space-y-3">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass border border-white/15 text-xs font-semibold tracking-wider uppercase text-white/80">
-                <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+            <div className="text-center max-w-3xl mx-auto mb-2 sm:mb-6 lg:mb-8 space-y-1 sm:space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full glass border border-white/15 text-[10px] sm:text-xs font-semibold tracking-wider uppercase text-white/80">
+                <Sparkles className="w-3 h-3 text-yellow-300" />
                 Curated Hair Care Formulations
               </div>
-              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold font-display tracking-tight text-white">
+              <h2 className="text-lg sm:text-3xl lg:text-5xl font-bold font-display tracking-tight text-white leading-tight">
                 Dual Botanical & Salon Formulations
               </h2>
-              <p className="text-white/70 text-xs sm:text-sm leading-relaxed max-w-2xl mx-auto">
+              <p className="hidden sm:block text-white/70 text-xs sm:text-sm leading-relaxed max-w-2xl mx-auto">
                 Formulated to address distinct hair needs: instant thermal repair and glass shine with Sunsilk Super Serum, and deep cellular hydration with Parachute Aloe Vera Enriched Coconut Oil.
               </p>
             </div>
 
             {/* Mobile Pill Switcher */}
-            <div className="flex lg:hidden items-center justify-center gap-2 mb-3">
+            <div className="flex lg:hidden items-center justify-center gap-2 mb-2 sm:mb-4">
               <button
                 onClick={() => switchProduct('sunsilk')}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+                className={`px-3.5 py-1 rounded-full text-[11px] sm:text-xs font-bold transition-all ${
                   activeId === 'sunsilk'
                     ? 'bg-[#fde047] text-[#1c1002] shadow-md'
                     : 'glass text-white/70 hover:text-white'
@@ -590,7 +597,7 @@ export function HeroProductsShowcase() {
               </button>
               <button
                 onClick={() => switchProduct('parachute')}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+                className={`px-3.5 py-1 rounded-full text-[11px] sm:text-xs font-bold transition-all ${
                   activeId === 'parachute'
                     ? 'bg-[#67e8f9] text-[#022135] shadow-md'
                     : 'glass text-white/70 hover:text-white'
@@ -601,16 +608,16 @@ export function HeroProductsShowcase() {
             </div>
 
             {/* Dual Product Cards Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 w-full max-w-md lg:max-w-none mx-auto">
               {/* Card 1: Sunsilk */}
               <div
                 ref={(el) => {
                   cardContainerRefs.current['sunsilk'] = el;
                 }}
                 onClick={() => switchProduct('sunsilk')}
-                className={`relative rounded-3xl p-5 sm:p-7 lg:p-8 transition-all duration-500 cursor-pointer overflow-hidden group flex-col justify-between ${
+                className={`relative rounded-2xl sm:rounded-3xl p-4 sm:p-7 lg:p-8 transition-all duration-500 cursor-pointer overflow-hidden group flex-col justify-between ${
                   activeId === 'sunsilk'
-                    ? 'flex w-full max-w-md mx-auto lg:max-w-none glass border-2 shadow-2xl'
+                    ? 'flex w-full glass border-2 shadow-2xl'
                     : 'hidden lg:flex glass-card hover:border-white/30 hover:-translate-y-1'
                 }`}
                 style={{
@@ -619,31 +626,31 @@ export function HeroProductsShowcase() {
                 }}
               >
                 {/* Header */}
-                <div className="flex items-center justify-between gap-3 mb-5 pb-3 border-b border-white/10">
-                  <span className="text-xs uppercase tracking-widest text-white/60 font-semibold font-nav truncate">
-                    Sunsilk • Thermal Protection & Shine
+                <div className="flex items-center justify-between gap-2 mb-3 sm:mb-5 pb-2 sm:pb-3 border-b border-white/10">
+                  <span className="text-[10px] sm:text-xs uppercase tracking-widest text-white/60 font-semibold font-nav truncate">
+                    Sunsilk • Thermal Protect
                   </span>
                   {activeId === 'sunsilk' && (
                     <div
-                      className="px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-bold tracking-wider uppercase shadow-md flex items-center gap-1.5 flex-shrink-0"
+                      className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[9px] sm:text-[11px] font-bold tracking-wider uppercase shadow-md flex items-center gap-1 flex-shrink-0"
                       style={{
                         backgroundColor: '#fde047',
                         color: '#1c1002',
                       }}
                     >
-                      <Check className="w-3 h-3 stroke-[3]" />
-                      Active In Hero
+                      <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 stroke-[3]" />
+                      Active
                     </div>
                   )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 lg:gap-7 flex-1">
+                <div className="flex flex-row items-center sm:items-start gap-3 sm:gap-6 lg:gap-7 flex-1">
                   {/* Bottle Visual Slot */}
                   <div
                     ref={(el) => {
                       cardSlotRefs.current['sunsilk'] = el;
                     }}
-                    className="relative w-36 sm:w-44 h-56 sm:h-64 flex-shrink-0 flex items-center justify-center drop-shadow-[0_20px_35px_rgba(0,0,0,0.65)]"
+                    className="relative w-24 sm:w-36 lg:w-44 h-40 sm:h-56 lg:h-64 flex-shrink-0 flex items-center justify-center drop-shadow-[0_20px_35px_rgba(0,0,0,0.65)]"
                   >
                     {/* If Sunsilk is inactive, show its own static bottle */}
                     {activeId !== 'sunsilk' && (
@@ -660,45 +667,45 @@ export function HeroProductsShowcase() {
                   {/* Details */}
                   <div className="flex flex-col justify-between text-left w-full min-w-0 flex-1 h-full">
                     <div>
-                      <h3 className="text-xl sm:text-2xl font-bold font-display text-white leading-tight">
+                      <h3 className="text-sm sm:text-xl lg:text-2xl font-bold font-display text-white leading-tight">
                         Style & Heat Protect Super Serum
                       </h3>
-                      <div className="flex items-center gap-3 mt-1.5 mb-2.5">
-                        <span className="text-2xl font-extrabold text-white font-display">$14.99</span>
-                        <span className="text-xs text-white/60 border border-white/20 px-2.5 py-0.5 rounded-full font-medium">
+                      <div className="flex items-center gap-2 sm:gap-3 mt-1 mb-1.5 sm:mb-2.5">
+                        <span className="text-lg sm:text-2xl font-extrabold text-white font-display">$14.99</span>
+                        <span className="text-[10px] sm:text-xs text-white/60 border border-white/20 px-2 py-0.5 rounded-full font-medium">
                           100ml
                         </span>
                       </div>
-                      <p className="text-white/70 text-xs sm:text-sm leading-relaxed mb-3">
+                      <p className="hidden sm:block text-white/70 text-xs sm:text-sm leading-relaxed mb-2 sm:mb-3">
                         Peptide-Repair Complex 10% • 100% Multi-Protection
                       </p>
                     </div>
 
-                    <div className="packaging-specs-box bg-black/35 rounded-2xl p-3.5 border border-white/10 space-y-1.5 mb-4 text-xs">
+                    <div className="packaging-specs-box bg-black/35 rounded-xl sm:rounded-2xl p-2 sm:p-3.5 border border-white/10 space-y-1 mb-2 sm:mb-4 text-[10px] sm:text-xs">
                       <div className="flex justify-between">
-                        <span className="text-white/45 uppercase text-[10px]">Active Complex</span>
-                        <span className="font-semibold text-white/95">10% Peptide-Repair Complex</span>
+                        <span className="text-white/45 uppercase text-[9px] sm:text-[10px]">Active Complex</span>
+                        <span className="font-semibold text-white/95 truncate ml-1">10% Peptide Complex</span>
                       </div>
-                      <div className="flex justify-between pt-1 border-t border-white/5">
-                        <span className="text-white/45 uppercase text-[10px]">Hair Profile</span>
-                        <span className="font-semibold text-white/95">All Hair Types & Heat-Styled</span>
+                      <div className="flex justify-between pt-0.5 sm:pt-1 border-t border-white/5">
+                        <span className="text-white/45 uppercase text-[9px] sm:text-[10px]">Hair Profile</span>
+                        <span className="font-semibold text-white/95 truncate ml-1">Heat-Styled Strands</span>
                       </div>
-                      <div className="flex justify-between pt-1 border-t border-white/5">
-                        <span className="text-white/45 uppercase text-[10px]">Finish</span>
-                        <span className="font-semibold text-white/95">Non-Greasy Liquid Gold Serum</span>
+                      <div className="flex justify-between pt-0.5 sm:pt-1 border-t border-white/5">
+                        <span className="text-white/45 uppercase text-[9px] sm:text-[10px]">Finish</span>
+                        <span className="font-semibold text-white/95 truncate ml-1">Liquid Gold Shine</span>
                       </div>
                     </div>
 
-                    <div className="action-cta-container pt-1 mt-auto">
+                    <div className="action-cta-container pt-0 sm:pt-1 mt-auto">
                       <button
-                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold transition-all shadow-xl"
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 sm:px-6 sm:py-2.5 rounded-full text-[10px] sm:text-xs font-bold transition-all shadow-xl"
                         style={{
                           backgroundColor: activeId === 'sunsilk' ? '#fde047' : 'rgba(255, 255, 255, 0.12)',
                           color: activeId === 'sunsilk' ? '#1c1002' : '#ffffff',
                         }}
                       >
-                        <span>{activeId === 'sunsilk' ? 'Viewing in Showcase' : 'Preview In Hero Experience'}</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <span>{activeId === 'sunsilk' ? 'Viewing in Showcase' : 'Preview In Hero'}</span>
+                        <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       </button>
                     </div>
                   </div>
@@ -711,9 +718,9 @@ export function HeroProductsShowcase() {
                   cardContainerRefs.current['parachute'] = el;
                 }}
                 onClick={() => switchProduct('parachute')}
-                className={`relative rounded-3xl p-5 sm:p-7 lg:p-8 transition-all duration-500 cursor-pointer overflow-hidden group flex-col justify-between ${
+                className={`relative rounded-2xl sm:rounded-3xl p-4 sm:p-7 lg:p-8 transition-all duration-500 cursor-pointer overflow-hidden group flex-col justify-between ${
                   activeId === 'parachute'
-                    ? 'flex w-full max-w-md mx-auto lg:max-w-none glass border-2 shadow-2xl'
+                    ? 'flex w-full glass border-2 shadow-2xl'
                     : 'hidden lg:flex glass-card hover:border-white/30 hover:-translate-y-1'
                 }`}
                 style={{
@@ -722,31 +729,31 @@ export function HeroProductsShowcase() {
                 }}
               >
                 {/* Header */}
-                <div className="flex items-center justify-between gap-3 mb-5 pb-3 border-b border-white/10">
-                  <span className="text-xs uppercase tracking-widest text-white/60 font-semibold font-nav truncate">
-                    Parachute Advansed • Botanical Hydration
+                <div className="flex items-center justify-between gap-2 mb-3 sm:mb-5 pb-2 sm:pb-3 border-b border-white/10">
+                  <span className="text-[10px] sm:text-xs uppercase tracking-widest text-white/60 font-semibold font-nav truncate">
+                    Parachute • Aloe Hydration
                   </span>
                   {activeId === 'parachute' && (
                     <div
-                      className="px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-bold tracking-wider uppercase shadow-md flex items-center gap-1.5 flex-shrink-0"
+                      className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[9px] sm:text-[11px] font-bold tracking-wider uppercase shadow-md flex items-center gap-1 flex-shrink-0"
                       style={{
                         backgroundColor: '#67e8f9',
                         color: '#022135',
                       }}
                     >
-                      <Check className="w-3 h-3 stroke-[3]" />
-                      Active In Hero
+                      <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 stroke-[3]" />
+                      Active
                     </div>
                   )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 lg:gap-7 flex-1">
+                <div className="flex flex-row items-center sm:items-start gap-3 sm:gap-6 lg:gap-7 flex-1">
                   {/* Bottle Visual Slot */}
                   <div
                     ref={(el) => {
                       cardSlotRefs.current['parachute'] = el;
                     }}
-                    className="relative w-36 sm:w-44 h-56 sm:h-64 flex-shrink-0 flex items-center justify-center drop-shadow-[0_20px_35px_rgba(0,0,0,0.65)]"
+                    className="relative w-24 sm:w-36 lg:w-44 h-40 sm:h-56 lg:h-64 flex-shrink-0 flex items-center justify-center drop-shadow-[0_20px_35px_rgba(0,0,0,0.65)]"
                   >
                     {/* If Parachute is inactive, show its own static bottle */}
                     {activeId !== 'parachute' && (
@@ -763,45 +770,45 @@ export function HeroProductsShowcase() {
                   {/* Details */}
                   <div className="flex flex-col justify-between text-left w-full min-w-0 flex-1 h-full">
                     <div>
-                      <h3 className="text-xl sm:text-2xl font-bold font-display text-white leading-tight">
+                      <h3 className="text-sm sm:text-xl lg:text-2xl font-bold font-display text-white leading-tight">
                         Aloe Vera Enriched Coconut Hair Oil
                       </h3>
-                      <div className="flex items-center gap-3 mt-1.5 mb-2.5">
-                        <span className="text-2xl font-extrabold text-white font-display">$11.99</span>
-                        <span className="text-xs text-white/60 border border-white/20 px-2.5 py-0.5 rounded-full font-medium">
+                      <div className="flex items-center gap-2 sm:gap-3 mt-1 mb-1.5 sm:mb-2.5">
+                        <span className="text-lg sm:text-2xl font-extrabold text-white font-display">$11.99</span>
+                        <span className="text-[10px] sm:text-xs text-white/60 border border-white/20 px-2 py-0.5 rounded-full font-medium">
                           150ml
                         </span>
                       </div>
-                      <p className="text-white/70 text-xs sm:text-sm leading-relaxed mb-3">
+                      <p className="hidden sm:block text-white/70 text-xs sm:text-sm leading-relaxed mb-2 sm:mb-3">
                         Aloe Vera & Enriched Coconut • For Soft Nourished Hair
                       </p>
                     </div>
 
-                    <div className="packaging-specs-box bg-black/35 rounded-2xl p-3.5 border border-white/10 space-y-1.5 mb-4 text-xs">
+                    <div className="packaging-specs-box bg-black/35 rounded-xl sm:rounded-2xl p-2 sm:p-3.5 border border-white/10 space-y-1 mb-2 sm:mb-4 text-[10px] sm:text-xs">
                       <div className="flex justify-between">
-                        <span className="text-white/45 uppercase text-[10px]">Active Complex</span>
-                        <span className="font-semibold text-white/95">Pure Aloe Vera & Deep Coconut Oil</span>
+                        <span className="text-white/45 uppercase text-[9px] sm:text-[10px]">Active Complex</span>
+                        <span className="font-semibold text-white/95 truncate ml-1">Pure Aloe & Coconut</span>
                       </div>
-                      <div className="flex justify-between pt-1 border-t border-white/5">
-                        <span className="text-white/45 uppercase text-[10px]">Hair Profile</span>
-                        <span className="font-semibold text-white/95">Dry, Dull, & Thirsty Strands</span>
+                      <div className="flex justify-between pt-0.5 sm:pt-1 border-t border-white/5">
+                        <span className="text-white/45 uppercase text-[9px] sm:text-[10px]">Hair Profile</span>
+                        <span className="font-semibold text-white/95 truncate ml-1">Dry & Dull Strands</span>
                       </div>
-                      <div className="flex justify-between pt-1 border-t border-white/5">
-                        <span className="text-white/45 uppercase text-[10px]">Finish</span>
-                        <span className="font-semibold text-white/95">Ultra-Lightweight Enriched Oil</span>
+                      <div className="flex justify-between pt-0.5 sm:pt-1 border-t border-white/5">
+                        <span className="text-white/45 uppercase text-[9px] sm:text-[10px]">Finish</span>
+                        <span className="font-semibold text-white/95 truncate ml-1">Ultra-Lightweight</span>
                       </div>
                     </div>
 
-                    <div className="action-cta-container pt-1 mt-auto">
+                    <div className="action-cta-container pt-0 sm:pt-1 mt-auto">
                       <button
-                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold transition-all shadow-xl"
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 sm:px-6 sm:py-2.5 rounded-full text-[10px] sm:text-xs font-bold transition-all shadow-xl"
                         style={{
                           backgroundColor: activeId === 'parachute' ? '#67e8f9' : 'rgba(255, 255, 255, 0.12)',
                           color: activeId === 'parachute' ? '#022135' : '#ffffff',
                         }}
                       >
-                        <span>{activeId === 'parachute' ? 'Viewing in Showcase' : 'Preview In Hero Experience'}</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <span>{activeId === 'parachute' ? 'Viewing in Showcase' : 'Preview In Hero'}</span>
+                        <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       </button>
                     </div>
                   </div>
@@ -826,23 +833,23 @@ export function HeroProductsShowcase() {
           {/* Ambient Spotlight */}
           <div
             ref={spotlightRef}
-            className="absolute w-[360px] h-[360px] sm:w-[480px] sm:h-[480px] md:w-[580px] md:h-[580px] rounded-full blur-[80px] pointer-events-none transition-all duration-1000 animate-pulse-glow"
+            className="absolute w-[280px] h-[280px] sm:w-[480px] sm:h-[480px] md:w-[580px] md:h-[580px] rounded-full blur-[70px] pointer-events-none transition-all duration-1000 animate-pulse-glow"
             style={{
               background: `radial-gradient(circle, ${activeProduct.theme.accentGlow} 0%, transparent 70%)`,
             }}
           />
 
-          {/* Sizable Flagship Bottle Visual Container (Larger Hero Size) */}
+          {/* Sizable Flagship Bottle Visual Container (Smooth responsive sizing) */}
           <div
             ref={bottleVisualRef}
-            className="relative w-[210px] h-[350px] sm:w-[260px] sm:h-[430px] md:w-[300px] md:h-[490px] lg:w-[320px] lg:h-[530px] xl:w-[350px] xl:h-[570px] will-change-transform drop-shadow-[0_25px_50px_rgba(0,0,0,0.7)]"
+            className="relative w-[170px] h-[280px] sm:w-[230px] sm:h-[380px] md:w-[280px] md:h-[460px] lg:w-[320px] lg:h-[530px] xl:w-[350px] xl:h-[570px] will-change-transform drop-shadow-[0_25px_50px_rgba(0,0,0,0.7)]"
           >
             <Image
               src={displayProduct.image}
               alt={displayProduct.name}
               fill
               priority
-              sizes="(max-width: 640px) 220px, (max-width: 1024px) 300px, 380px"
+              sizes="(max-width: 640px) 180px, (max-width: 1024px) 280px, 380px"
               className="object-contain filter contrast-[1.03] select-none"
             />
 
