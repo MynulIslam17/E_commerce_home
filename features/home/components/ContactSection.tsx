@@ -1,15 +1,74 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useActiveProduct } from '@/features/products/context/ProductContext';
 import { Mail, Sparkles, Send, CheckCircle2, Phone, MapPin } from 'lucide-react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 export function ContactSection() {
-  const { activeProduct } = useActiveProduct();
+  const { activeProduct, activeId } = useActiveProduct();
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [inquiryType, setInquiryType] = useState('Product Consultation');
   const [submitted, setSubmitted] = useState(false);
+
+  const sectionRef = useRef<HTMLElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const leftColRef = useRef<HTMLDivElement>(null);
+  const formCardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
+    const ctx = gsap.context(() => {
+      if (leftColRef.current) {
+        gsap.fromTo(
+          leftColRef.current.children,
+          { opacity: 0, x: -35 },
+          {
+            opacity: 1,
+            x: 0,
+            duration: 0.8,
+            stagger: 0.14,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: leftColRef.current,
+              start: 'top 85%',
+              toggleActions: 'play none none reverse',
+            },
+          }
+        );
+      }
+
+      if (formCardRef.current) {
+        gsap.fromTo(
+          formCardRef.current,
+          { opacity: 0, y: 40, scale: 0.96 },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.85,
+            ease: 'back.out(1.2)',
+            scrollTrigger: {
+              trigger: formCardRef.current,
+              start: 'top 85%',
+              toggleActions: 'play none none reverse',
+            },
+          }
+        );
+      }
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, [activeId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,18 +81,18 @@ export function ContactSection() {
   };
 
   return (
-    <section id="contact" className="relative w-full py-28 px-5 sm:px-8 md:px-12 lg:px-16 z-20">
+    <section id="contact" ref={sectionRef} className="relative w-full py-28 px-5 sm:px-8 md:px-12 lg:px-16 z-20">
       <div className="max-w-7xl mx-auto">
-        <div className="glass rounded-3xl p-8 sm:p-14 border border-white/20 relative overflow-hidden">
+        <div ref={containerRef} className="glass rounded-3xl p-8 sm:p-14 border border-white/20 relative overflow-hidden">
           {/* Ambient Glow */}
           <div
-            className="absolute -top-24 -right-24 w-96 h-96 rounded-full blur-[100px] opacity-30 pointer-events-none"
+            className="absolute -top-24 -right-24 w-96 h-96 rounded-full blur-[100px] opacity-30 pointer-events-none transition-colors duration-1000"
             style={{ backgroundColor: activeProduct.theme.accent }}
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Left Column: Heading and info */}
-            <div className="space-y-6">
+            <div ref={leftColRef} className="space-y-6">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/40 border border-white/15 text-xs font-semibold tracking-wider uppercase text-white/80">
                 <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
                 Hair Care Atelier & Concierge
@@ -81,7 +140,7 @@ export function ContactSection() {
             </div>
 
             {/* Right Column: Interactive Form */}
-            <div className="glass-card rounded-2xl p-6 sm:p-8 border border-white/20">
+            <div ref={formCardRef} className="glass-card rounded-2xl p-6 sm:p-8 border border-white/20">
               {submitted ? (
                 <div className="py-12 flex flex-col items-center justify-center text-center space-y-4 animate-in fade-in duration-500">
                   <div
@@ -141,12 +200,17 @@ export function ContactSection() {
                     <select
                       value={inquiryType}
                       onChange={(e) => setInquiryType(e.target.value)}
-                      className="w-full bg-black/70 border border-white/15 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white/50 transition-colors"
+                      className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white/50 transition-colors cursor-pointer"
                     >
-                      <option value="Product Consultation">Formula Advice & Hair Analysis</option>
-                      <option value="Sunsilk Heat Protection">Sunsilk 10% Peptide Super Serum</option>
-                      <option value="Parachute Aloe Hydration">Parachute Aloe Vera Coconut Oil</option>
-                      <option value="Salon Partnership">Professional Salon Distribution</option>
+                      <option value="Product Consultation" className="bg-neutral-900 text-white">
+                        Personal Product Consultation
+                      </option>
+                      <option value="Salon Wholesale" className="bg-neutral-900 text-white">
+                        Salon Partner / Wholesale
+                      </option>
+                      <option value="Ingredient Inquiry" className="bg-neutral-900 text-white">
+                        Ingredient & Actives Verification
+                      </option>
                     </select>
                   </div>
 
@@ -161,10 +225,6 @@ export function ContactSection() {
                     <span>Submit Request</span>
                     <Send className="w-3.5 h-3.5" />
                   </button>
-
-                  <p className="text-[11px] text-white/40 text-center pt-2">
-                    We respect your privacy. No spam, ever.
-                  </p>
                 </form>
               )}
             </div>

@@ -30,7 +30,7 @@ export default function RootLayout({
         <ProductProvider>
           <BubblesBackground />
           <Navbar />
-          <main className="relative z-10 w-full flex flex-col">{children}</main>
+          <main className="relative z-10 w-full block">{children}</main>
           <Footer />
         </ProductProvider>
       </body>
