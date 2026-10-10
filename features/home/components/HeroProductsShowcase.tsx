@@ -30,6 +30,7 @@ export function HeroProductsShowcase() {
   const travelingBottleRef = useRef<HTMLDivElement>(null);
   const bottleVisualRef = useRef<HTMLDivElement>(null);
   const spotlightRef = useRef<HTMLDivElement>(null);
+  const floatingLayerRef = useRef<HTMLDivElement>(null);
 
   // Card slot refs
   const cardSlotRefs = useRef<Record<string, HTMLDivElement | null>>({
@@ -186,6 +187,7 @@ export function HeroProductsShowcase() {
       const heroRightEl = heroRightRef.current;
       const spotlightEl = spotlightRef.current;
       const bottleVisual = bottleVisualRef.current;
+      const floatingLayerEl = floatingLayerRef.current;
 
       if (!showcaseEl || !heroStageEl || !productsStageEl || !travelingBottleEl || !bottleVisual) return;
 
@@ -194,17 +196,22 @@ export function HeroProductsShowcase() {
       // Dynamic calculation of traveling bottle target coordinates and scale
       const getTravelCoordinates = () => {
         const targetSlot = cardSlotRefs.current[activeId];
-        if (!targetSlot || !showcaseEl || !bottleVisual) {
+        const isMobileNow = typeof window !== 'undefined' ? window.innerWidth < 1024 : false;
+
+        const slotRect = targetSlot?.getBoundingClientRect();
+        const showcaseRect = showcaseEl.getBoundingClientRect();
+
+        // Check if slot element is mounted with valid non-zero dimensions
+        if (!targetSlot || !slotRect || slotRect.width === 0 || slotRect.height === 0 || !bottleVisual) {
+          const fallbackDeltaX = isMobileNow ? -115 : (activeId === 'sunsilk' ? -380 : 140);
+          const fallbackDeltaY = isMobileNow ? 15 : 35;
+          const fallbackScale = isMobileNow ? 0.54 : 0.48;
           return {
-            deltaX: activeId === 'sunsilk' ? -380 : 380,
-            deltaY: 40,
-            scale: 0.48,
+            deltaX: fallbackDeltaX,
+            deltaY: fallbackDeltaY,
+            scale: fallbackScale,
           };
         }
-
-        // Measure slot and showcase relative to viewport
-        const slotRect = targetSlot.getBoundingClientRect();
-        const showcaseRect = showcaseEl.getBoundingClientRect();
 
         // Slot center point
         const slotCenterX = slotRect.left + slotRect.width / 2;
@@ -215,17 +222,24 @@ export function HeroProductsShowcase() {
         const showcaseCenterY = showcaseRect.top + showcaseRect.height / 2;
 
         const deltaX = slotCenterX - showcaseCenterX;
-        const deltaY = slotCenterY - showcaseCenterY;
+
+        // Account for active Y translation on productsStageEl so landing coordinates point to true resting state
+        const currentStageY = Number(gsap.getProperty(productsStageEl, 'y')) || 0;
+        const restingSlotCenterY = slotCenterY - currentStageY;
+        const deltaY = restingSlotCenterY - showcaseCenterY;
 
         // Accurate scale calculation: slot height divided by hero bottle native rendered height
         const heroHeight = bottleVisual.offsetHeight || 530;
         const slotHeight = slotRect.height || 256;
-        const targetScale = Math.min(slotHeight / heroHeight, slotRect.width / (bottleVisual.offsetWidth || 320)) * 0.96;
+        const targetScale = Math.min(
+          slotHeight / heroHeight,
+          slotRect.width / (bottleVisual.offsetWidth || 320)
+        ) * 0.96;
 
         return {
           deltaX,
           deltaY,
-          scale: targetScale > 0.1 ? targetScale : 0.48,
+          scale: targetScale > 0.1 ? targetScale : (isMobileNow ? 0.54 : 0.48),
         };
       };
 
@@ -241,6 +255,7 @@ export function HeroProductsShowcase() {
           scrub: isMobile ? 0.5 : 0.8,
           anticipatePin: 1,
           fastScrollEnd: true,
+          invalidateOnRefresh: true,
           onUpdate: (self) => {
             scrollProgressRef.current = self.progress;
           },
@@ -310,6 +325,19 @@ export function HeroProductsShowcase() {
         },
         0.25
       );
+
+      // Soften ambient floating ingredients during product section showcase
+      if (floatingLayerEl) {
+        masterTl.to(
+          floatingLayerEl,
+          {
+            opacity: isMobile ? 0.05 : 0.25,
+            ease: 'power2.out',
+            duration: 0.35,
+          },
+          0.25
+        );
+      }
 
       // ---------------------------------------------------------------------
       // PHASE 3: Products Stage Emerges (0.30 -> 0.85)
@@ -392,6 +420,9 @@ export function HeroProductsShowcase() {
 
     // Resize handler for responsive orientation changes
     const handleResize = () => {
+      if (timelineRef.current) {
+        timelineRef.current.invalidate();
+      }
       ScrollTrigger.refresh();
     };
     window.addEventListener('resize', handleResize);
@@ -414,7 +445,9 @@ export function HeroProductsShowcase() {
       {/* Pinned Stage Viewport (100dvh) */}
       <div className="relative w-full h-[100dvh] min-h-[580px] max-h-[1050px] overflow-hidden flex items-center justify-center">
         {/* Floating Ambient Particles Layer */}
-        <ProductFloatingElements />
+        <div ref={floatingLayerRef} className="absolute inset-0 pointer-events-none z-[5]">
+          <ProductFloatingElements />
+        </div>
 
         {/* ------------------------------------------------------------------------- */}
         {/* HERO STAGE LAYER (#home) */}

@@ -77,9 +77,12 @@ export function ProductFloatingElements() {
     // 3. Explode back out to random target positions
     tl.to({}, { duration: 0.2 }); // small pause
 
+    const isNarrow = windowWidth < 1024;
+    const spread = isNarrow ? 60 : 180;
+
     domItems.forEach((el, i) => {
-      const nextBaseX = (Math.random() - 0.5) * 180;
-      const nextBaseY = (Math.random() - 0.5) * 180;
+      const nextBaseX = (Math.random() - 0.5) * spread;
+      const nextBaseY = (Math.random() - 0.5) * spread;
 
       tl.to(
         el,
@@ -190,11 +193,11 @@ export function ProductFloatingElements() {
     <div
       ref={containerRef}
       className="absolute inset-0 pointer-events-none overflow-hidden select-none"
-      style={{ zIndex: 12 }}
+      style={{ zIndex: 5 }}
     >
       {items.map((item, idx) => {
         const isForeground = item.layer === 'fg';
-        const zIndex = isForeground ? 15 : 6;
+        const zIndex = isForeground ? 5 : 2;
 
         return (
           <div
