@@ -51,9 +51,17 @@ export interface ShowcaseConfig {
     origin: string;
     percentage: string;
   }[];
+  layout: {
+    bottleScrollOffsetDirection: 'left' | 'right';
+    desktopOffsetX: number;
+  };
 }
 
 export const SHOWCASE_CONFIG: ShowcaseConfig = {
+  layout: {
+    bottleScrollOffsetDirection: 'left', // Smoothly shifts bottle left on scroll as requested
+    desktopOffsetX: 0.88,
+  },
   product: {
     brand: 'LUMINA',
     subBrand: 'HAIR ATELIER',
