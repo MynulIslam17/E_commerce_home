@@ -43,6 +43,10 @@ export const ProductScene = forwardRef<ProductSceneHandle, ProductSceneProps>(fu
     currentRotationY: number;
     targetRotationX: number;
     currentRotationX: number;
+    targetPosX: number;
+    currentPosX: number;
+    targetPosY: number;
+    currentPosY: number;
     scaleMultiplier: number;
     currentScale: number;
     lastTime: number;
@@ -63,6 +67,10 @@ export const ProductScene = forwardRef<ProductSceneHandle, ProductSceneProps>(fu
     currentRotationY: 0,
     targetRotationX: 0,
     currentRotationX: 0,
+    targetPosX: 0,
+    currentPosX: 0,
+    targetPosY: -0.06,
+    currentPosY: -0.06,
     scaleMultiplier: 1.0,
     currentScale: 1.0,
     lastTime: 0,
@@ -91,15 +99,27 @@ export const ProductScene = forwardRef<ProductSceneHandle, ProductSceneProps>(fu
       state.shaderMaterial.uniforms.uWordMix.value = wordMix;
 
       // Rotate bottle along Y axis: full 360-degree rotation across scroll
-      // progress 0.0 -> 0 rad
-      // progress 1.0 -> 0.65 * PI
-      // progress 2.0 -> 1.35 * PI
-      // progress 3.0 -> 2.0 * PI
       const totalRotation = progress * (Math.PI * (2.0 / 3.0));
       state.targetRotationY = totalRotation;
 
       // Subtle tilt variation per chapter
       state.targetRotationX = Math.sin(progress * Math.PI) * 0.08;
+
+      // Horizontal translation on scroll:
+      // Hero (progress 0.0): bottle is in center (x = 0)
+      // As user scrolls into chapters (progress > 0):
+      // The bottle smoothly glides horizontally (clamp between 0 and 1)
+      const isMobileNow = typeof window !== 'undefined' && window.innerWidth < 1024;
+      const scrollFactor = Math.min(1.0, Math.max(0.0, progress));
+      const directionSign = SHOWCASE_CONFIG.layout.bottleScrollOffsetDirection === 'left' ? -1.0 : 1.0;
+
+      if (isMobileNow) {
+        state.targetPosX = 0.0;
+        state.targetPosY = 0.08;
+      } else {
+        state.targetPosX = directionSign * SHOWCASE_CONFIG.layout.desktopOffsetX * scrollFactor;
+        state.targetPosY = -0.06;
+      }
     },
     triggerSpray: () => {
       const state = sceneStateRef.current;
@@ -340,6 +360,14 @@ export const ProductScene = forwardRef<ProductSceneHandle, ProductSceneProps>(fu
 
       // Update bottle transforms
       if (bottlePivot) {
+        // Smooth translation lerp
+        state.currentPosX += (state.targetPosX - state.currentPosX) * 0.08;
+        state.currentPosY += (state.targetPosY - state.currentPosY) * 0.08;
+
+        bottlePivot.position.x = state.currentPosX;
+        // Subtle organic breathing float on Y
+        bottlePivot.position.y = state.currentPosY + Math.sin(elapsed * 0.8) * 0.03;
+
         // Smooth rotation Y
         state.currentRotationY += (state.targetRotationY - state.currentRotationY) * 0.1;
         bottlePivot.rotation.y = state.currentRotationY;
