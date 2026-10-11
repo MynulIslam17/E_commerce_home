@@ -37,10 +37,14 @@ export function ShowcaseStage() {
     const stageHeight = stageRef.current.offsetHeight - window.innerHeight;
     const targetScroll = stageTop + (stageHeight * (chapterNum / 3));
 
-    window.scrollTo({
-      top: targetScroll,
-      behavior: 'smooth',
-    });
+    if ((window as any).lenis) {
+      (window as any).lenis.scrollTo(targetScroll, { duration: 1.4 });
+    } else {
+      window.scrollTo({
+        top: targetScroll,
+        behavior: 'smooth',
+      });
+    }
   };
 
   useEffect(() => {
@@ -214,7 +218,11 @@ export function ShowcaseStage() {
               ref={(el) => {
                 chapterCopyRefs.current[idx] = el;
               }}
-              className="absolute left-6 sm:left-12 lg:left-20 bottom-12 sm:bottom-16 max-w-md lg:max-w-lg pointer-events-auto opacity-0"
+              className={`absolute ${
+                SHOWCASE_CONFIG.layout.bottleScrollOffsetDirection === 'left'
+                  ? 'right-6 sm:right-14 lg:right-36 bottom-20 sm:bottom-24 lg:bottom-28'
+                  : 'left-6 sm:left-12 lg:left-20 bottom-12 sm:bottom-16'
+              } max-w-sm sm:max-w-md lg:max-w-lg pointer-events-auto opacity-0`}
               style={{ willChange: 'transform, opacity' }}
             >
               <div className="glass-card rounded-3xl p-6 sm:p-8 lg:p-9 border border-white/15 backdrop-blur-2xl bg-black/45 shadow-[0_20px_50px_rgba(0,0,0,0.6)] space-y-3">

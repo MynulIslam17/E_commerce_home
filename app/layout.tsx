@@ -5,6 +5,8 @@ import { Navbar } from '@/components/ui/Navbar';
 import { BubblesBackground } from '@/features/home/components/BubblesBackground';
 import { Footer } from '@/components/ui/Footer';
 
+import { SmoothScrollProvider } from '@/components/providers/SmoothScrollProvider';
+
 export const metadata: Metadata = {
   title: 'LUMINA · VERA Hydra Serum | Bio-Cellular Hair Elixir',
   description:
@@ -17,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark scroll-smooth">
+    <html lang="en" className="dark">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -27,11 +29,13 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen relative antialiased selection:bg-[#f59e0b] selection:text-[#141412] bg-[#0c0a09] text-white">
-        <Navbar />
-        <main id="main" className="relative z-10 w-full block">
-          {children}
-        </main>
-        <Footer />
+        <SmoothScrollProvider>
+          <Navbar />
+          <main id="main" className="relative z-10 w-full block">
+            {children}
+          </main>
+          <Footer />
+        </SmoothScrollProvider>
       </body>
     </html>
   );
