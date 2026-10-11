@@ -9,16 +9,24 @@
   --muted-color: rgba(255, 255, 255, 0.72);
   --glass-bg: rgba(255, 255, 255, 0.06);
   --glass-border: rgba(255, 255, 255, 0.12);
-  --font-main: 'Inter', sans-serif;
-  --font-heading: 'Satisfy', cursive;
-  --font-nav: 'Manrope', sans-serif;
-  --font-display: 'Outfit', sans-serif;
+  --font-serif: 'Castoro', serif;
+  --font-sans: 'Red Hat Text', sans-serif;
+  --font-main: 'Red Hat Text', sans-serif;
+  --font-heading: 'Castoro', serif;
+  --font-nav: 'Red Hat Text', sans-serif;
+  --font-display: 'Castoro', serif;
 
-  /* Dynamic Background Radial Gradient Variables (Default Sunsilk) */
-  --bg-inner: #b45309;
-  --bg-mid: #78350f;
-  --bg-outer: #160802;
-  --accent-color: #fde047;
+  /* GSAP Vault & VERA Editorial Palette */
+  --cream: #ecebe6;
+  --charcoal: #141412;
+  --amber-gold: #f59e0b;
+  --amber-dark: #b45309;
+  --bronze: #92400e;
+  --sea-mist: #99f6e4;
+  --bg-inner: #92400e;
+  --bg-mid: #451a03;
+  --bg-outer: #0c0a09;
+  --accent-color: #f59e0b;
   --accent-glow: rgba(245, 158, 11, 0.4);
 }
 
@@ -26,7 +34,7 @@ html {
   scroll-behavior: smooth;
   background-color: #0b0502;
   color: #ffffff;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
@@ -34,7 +42,7 @@ body {
   background-attachment: fixed;
   color: var(--text-color);
   font-family: var(--font-main);
-  overflow-x: hidden;
+  overflow-x: clip;
   min-height: 100vh;
   transition: background 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -57,6 +65,14 @@ body {
 }
 
 /* Typography classes */
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+.font-sans {
+  font-family: var(--font-sans);
+}
+
 .font-heading {
   font-family: var(--font-heading);
 }
@@ -67,6 +83,39 @@ body {
 
 .font-display {
   font-family: var(--font-display);
+}
+
+.stage-title {
+  font-family: var(--font-serif);
+  font-size: clamp(2.8rem, 7vw, 6.5rem);
+  line-height: 0.95;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.stage-h2 {
+  font-family: var(--font-serif);
+  font-size: clamp(2.2rem, 4.5vw, 4.2rem);
+  line-height: 1.05;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+
+.kicker {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.stage-lede {
+  font-family: var(--font-sans);
+  font-size: clamp(0.95rem, 1.25vw, 1.15rem);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.78);
+  max-width: 440px;
 }
 
 .hero-cursive-title {

@@ -1,18 +1,20 @@
 import React from 'react';
-import { HeroProductsShowcase } from '@/features/home/components/HeroProductsShowcase';
-import { IngredientsSection } from '@/features/home/components/IngredientsSection';
-import { BenefitsSection } from '@/features/home/components/BenefitsSection';
-import { ReviewsSection } from '@/features/home/components/ReviewsSection';
-import { ContactSection } from '@/features/home/components/ContactSection';
+import { ShowcaseStage } from '@/features/showcase/components/ShowcaseStage';
+import { AtelierSection } from '@/features/editorial/components/AtelierSection';
+import { FormulaSection } from '@/features/editorial/components/FormulaSection';
+import { WearingSection } from '@/features/editorial/components/WearingSection';
+import { CollectionSection } from '@/features/editorial/components/CollectionSection';
+import { StockistsSection } from '@/features/editorial/components/StockistsSection';
 
 export default function HomePage() {
   return (
     <>
-      <HeroProductsShowcase />
-      <IngredientsSection />
-      <BenefitsSection />
-      <ReviewsSection />
-      <ContactSection />
+      <ShowcaseStage />
+      <AtelierSection />
+      <FormulaSection />
+      <WearingSection />
+      <CollectionSection />
+      <StockistsSection />
     </>
   );
 }
